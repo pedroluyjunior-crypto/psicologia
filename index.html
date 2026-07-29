@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PsicoApp</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f0f2f8;--bg2:#fff;--bg3:#f5f7fc;--border:#dde2f0;
+    --accent:#4f6ef7;--accent2:#7c5cfc;--text:#1a1f36;--text2:#4a5578;--text3:#8f9bb8;
+    --danger:#e8395a;--warning:#f59e0b;--success:#10b981;
+    --urgent:#e8395a;--soon:#f59e0b;--ok:#10b981;
+    --radius:12px;--shadow:0 2px 12px rgba(79,110,247,.08);--shadow2:0 4px 24px rgba(79,110,247,.13);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* LOGIN */
+  #login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#eef1fb,#f0eaff);display:flex;align-items:center;justify-content:center;z-index:9999;}
+  #login-screen.hidden{display:none;}
+  .login-card{background:#fff;border-radius:20px;padding:40px 36px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(79,110,247,.15);border:1.5px solid var(--border);}
+  .login-logo{text-align:center;font-size:28px;font-weight:700;color:var(--accent);letter-spacing:-.5px;margin-bottom:4px;}
+  .login-logo span{color:var(--accent2);}
+  .login-sub{text-align:center;font-size:13px;color:var(--text3);margin-bottom:32px;}
+  .login-group{margin-bottom:18px;}
+  .login-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:block;}
+  .login-input-wrap{position:relative;}
+  .login-input{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:11px 44px 11px 14px;outline:none;font-family:'Plus Jakarta Sans',sans-serif;transition:border-color .2s;}
+  .login-input:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(79,110,247,.1);}
+  .login-eye{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px;}
+  .caps-warn{display:none;align-items:center;gap:6px;margin-top:7px;font-size:11px;font-weight:600;color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:7px;padding:6px 10px;}
+  .caps-warn.show{display:flex;}
+  .login-error{display:none;font-size:12px;font-weight:600;color:var(--danger);background:rgba(232,57,90,.06);border:1px solid rgba(232,57,90,.2);border-radius:8px;padding:9px 13px;margin-bottom:16px;text-align:center;}
+  .login-error.show{display:block;}
+  .login-btn{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:background .2s;margin-top:4px;}
+  .login-btn:hover{background:#3d5be8;}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+  .login-shake{animation:shake .4s ease;}
+
+  /* APP */
+  #app{display:none;}
+  #app.show{display:block;}
+
+  .header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:16px;height:60px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);}
+  .header-logo{font-size:20px;font-weight:700;color:var(--accent);letter-spacing:-.5px;white-space:nowrap;}
+  .header-logo span{color:var(--accent2);}
+  .header-actions{display:flex;align-items:center;gap:8px;margin-left:auto;}
+  .header-sync{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:6px;}
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--success);}
+  .sync-dot.offline{background:var(--danger);}
+  .sync-dot.syncing{background:var(--warning);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  .banner{display:none;background:linear-gradient(135deg,#fff7ed,#fef3c7);border-bottom:2px solid #fcd34d;padding:14px 24px;}
+  .banner.show{display:block;}
+  .banner-title{font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .banner-items{display:flex;flex-direction:column;gap:6px;}
+  .banner-item{font-size:12px;color:#78350f;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.7);padding:8px 12px;border-radius:8px;border-left:3px solid var(--urgent);}
+  .banner-item.breve{border-left-color:var(--soon);}
+  .banner-item.dias{border-left-color:#3b82f6;color:#1e3a8a;}
+  .banner-close{margin-left:auto;background:none;border:none;color:#92400e;cursor:pointer;font-size:16px;}
+
+  .layout{display:flex;height:calc(100vh - 60px);}
+
+  .sidebar{width:248px;min-width:248px;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;padding-bottom:16px;}
+  .sidebar-section{padding:20px 16px 6px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;margin:2px 8px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);transition:all .15s;border:none;background:none;width:calc(100% - 16px);text-align:left;}
+  .nav-item:hover{background:var(--bg3);color:var(--text);}
+  .nav-item.active{background:linear-gradient(135deg,rgba(79,110,247,.1),rgba(124,92,252,.08));color:var(--accent);border:1px solid rgba(79,110,247,.15);}
+  .nav-item .badge{margin-left:auto;font-size:10px;background:var(--urgent);color:#fff;border-radius:10px;padding:2px 7px;font-weight:700;}
+  .nav-item .badge.soon{background:var(--soon);}
+  .nav-item .badge.dias{background:#3b82f6;}
+  .nav-code{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(79,110,247,.1);color:var(--accent);padding:2px 6px;border-radius:5px;flex-shrink:0;}
+  .nav-lock{display:flex;align-items:center;gap:10px;padding:10px 14px;margin:8px 8px 2px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--danger);border:1px solid rgba(232,57,90,.2);background:rgba(232,57,90,.04);width:calc(100% - 16px);text-align:left;transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif;}
+  .nav-lock:hover{background:rgba(232,57,90,.1);}
+
+  .main{flex:1;overflow-y:auto;padding:28px;}
+  .materia-header{margin-bottom:24px;}
+  .materia-code{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);background:rgba(79,110,247,.08);padding:3px 10px;border-radius:6px;display:inline-block;margin-bottom:8px;font-weight:600;}
+  .materia-title{font-size:24px;font-weight:700;color:var(--text);letter-spacing:-.5px;}
+
+  .tabs{display:flex;gap:4px;margin-bottom:20px;background:var(--bg3);padding:4px;border-radius:12px;border:1px solid var(--border);}
+  .tab{flex:1;padding:8px 14px;border-radius:9px;border:none;background:none;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif;}
+  .tab.active{background:var(--bg2);color:var(--accent);box-shadow:0 1px 6px rgba(79,110,247,.12);}
+
+  .btn{padding:8px 16px;border-radius:9px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;font-family:'Plus Jakarta Sans',sans-serif;}
+  .btn:hover{background:var(--bg3);border-color:var(--accent);color:var(--accent);}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .btn.primary:hover{background:#3d5be8;}
+  .btn.danger{background:rgba(232,57,90,.06);border-color:var(--danger);color:var(--danger);}
+  .btn.small{padding:4px 10px;font-size:11px;}
+
+  /* ANOTAÇÕES CARDS */
+  .anotacoes-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+  .anotacoes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;align-items:start;}
+  .nota-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;transition:box-shadow .2s,border-color .2s;overflow:hidden;}
+  .nota-card:hover{border-color:var(--accent);box-shadow:var(--shadow2);}
+  .nota-card-actions-bar{display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px;background:var(--bg3);border-bottom:1px solid var(--border);}
+  .nota-card-body{padding:14px 18px;display:flex;flex-direction:column;gap:10px;}
+  .nota-card-footer{padding:10px 18px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;}
+  .nota-titulo{font-size:15px;font-weight:700;color:var(--text);word-break:break-word;}
+  .nota-conteudo{font-size:13px;color:var(--text2);line-height:1.7;word-break:break-word;max-height:160px;overflow:hidden;position:relative;}
+  .nota-conteudo.expandido{max-height:none;}
+  .nota-conteudo img{max-width:100%;border-radius:8px;margin:4px 0;display:block;}
+  .nota-conteudo b,.nota-conteudo strong{font-weight:700;}
+  .nota-conteudo i,.nota-conteudo em{font-style:italic;}
+  .nota-conteudo u{text-decoration:underline;}
+  .nota-conteudo ul{padding-left:20px;margin:4px 0;}
+  .nota-conteudo ol{padding-left:20px;margin:4px 0;}
+  .nota-conteudo li{margin:2px 0;}
+  .nota-conteudo p{margin:4px 0;}
+  .nota-conteudo table{border-collapse:collapse;width:100%;margin:6px 0;font-size:12px;}
+  .nota-conteudo td,.nota-conteudo th{border:1px solid var(--border);padding:5px 10px;text-align:left;}
+  .nota-conteudo th{background:var(--bg3);font-weight:700;}
+  .nota-conteudo hr{border:none;border-top:1px solid var(--border);margin:8px 0;}
+  .nota-fade{position:absolute;bottom:0;left:0;right:0;height:48px;background:linear-gradient(transparent,var(--bg2));pointer-events:none;}
+  .nota-meta{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+  .nota-anexos{display:flex;flex-wrap:wrap;gap:6px;}
+  .nota-anexo-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:3px 10px;color:var(--text2);text-decoration:none;transition:all .15s;}
+  .nota-anexo-chip:hover{border-color:var(--accent);color:var(--accent);}
+
+  /* DASHBOARD INTERATIVO */
+  .dash-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;user-select:none;}
+  .dash-card:hover{border-color:var(--accent);box-shadow:var(--shadow2);transform:translateY(-2px);}
+  .dash-card-val{font-size:32px;font-weight:700;color:var(--accent);font-family:'JetBrains Mono',monospace;}
+  .dash-card-label{font-size:11px;color:var(--text2);margin-top:4px;font-weight:500;}
+  .dash-card-hint{font-size:10px;color:var(--text3);margin-top:6px;}
+  #modal-dash{z-index:650;}
+  #modal-dash .modal{max-width:860px;max-height:92vh;}
+  .dash-modal-list{display:flex;flex-direction:column;gap:8px;}
+  .dash-modal-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 16px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px;}
+  .dash-modal-item:hover{border-color:var(--accent);background:rgba(79,110,247,.05);}
+  .dash-modal-item-icon{font-size:20px;flex-shrink:0;}
+  .dash-modal-item-body{flex:1;min-width:0;}
+  .dash-modal-item-titulo{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dash-modal-item-meta{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+  .dash-modal-item-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;}
+  .dash-modal-empty{text-align:center;padding:40px;color:var(--text3);font-size:13px;}
+
+  /* MODAL EDITOR */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,31,54,.5);z-index:500;align-items:center;justify-content:center;padding:16px;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--bg2);border-radius:16px;width:100%;max-width:680px;max-height:92vh;overflow:hidden;box-shadow:0 16px 60px rgba(0,0,0,.2);display:flex;flex-direction:column;}
+  .modal-ver{max-width:960px;max-height:95vh;}
+  .modal-header{padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);}
+  .modal-title{font-size:16px;font-weight:700;color:var(--text);}
+  .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);padding:4px;}
+  .modal-body{padding:20px 24px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1;}
+  .modal-footer{padding:14px 24px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);flex-shrink:0;background:var(--bg2);}
+  .form-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block;}
+  .form-input{background:var(--bg3);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-size:13px;padding:9px 13px;outline:none;font-family:'Plus Jakarta Sans',sans-serif;transition:border-color .2s;width:100%;}
+  .form-input:focus{border-color:var(--accent);background:var(--bg2);}
+
+  /* EDITOR RICO */
+  .editor-toolbar{display:flex;gap:4px;flex-wrap:wrap;padding:8px;background:var(--bg3);border:1.5px solid var(--border);border-bottom:none;border-radius:9px 9px 0 0;}
+  .editor-btn{padding:4px 8px;border:none;background:none;cursor:pointer;border-radius:5px;font-size:13px;color:var(--text2);transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif;}
+  .editor-btn:hover{background:var(--border);color:var(--text);}
+  .editor-sep{width:1px;background:var(--border);margin:2px 4px;}
+  .editor-area{min-height:180px;background:var(--bg2);border:1.5px solid var(--border);border-top:none;border-radius:0 0 9px 9px;padding:14px;outline:none;font-size:14px;line-height:1.8;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;}
+  .editor-area:empty:before{content:attr(data-placeholder);color:var(--text3);}
+  .editor-area img{max-width:100%;border-radius:8px;margin:4px 0;cursor:pointer;}
+
+  /* ANEXOS DO EDITOR */
+  .editor-anexos{display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:var(--bg3);border:1.5px solid var(--border);border-top:none;border-radius:0 0 9px 9px;margin-top:-1px;}
+  .editor-anexo-item{display:inline-flex;align-items:center;gap:6px;font-size:11px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:4px 10px;color:var(--text2);}
+  .editor-anexo-del{background:none;border:none;cursor:pointer;color:var(--danger);font-size:13px;padding:0;line-height:1;}
+  .upload-btn-label{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;border:1.5px dashed var(--border);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+  .upload-btn-label:hover{border-color:var(--accent);color:var(--accent);}
+
+  /* TAREFAS */
+  .nova-tarefa-form{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:20px;box-shadow:var(--shadow);}
+  .form-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  .form-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px;}
+  .tarefa-list{display:flex;flex-direction:column;gap:10px;}
+  .tarefa-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;gap:14px;align-items:flex-start;transition:all .2s;box-shadow:var(--shadow);}
+  .tarefa-card:hover{border-color:var(--accent);box-shadow:var(--shadow2);}
+  .tarefa-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);cursor:pointer;flex-shrink:0;margin-top:2px;transition:all .15s;display:flex;align-items:center;justify-content:center;font-size:11px;background:var(--bg3);}
+  .tarefa-check:hover{border-color:var(--success);background:rgba(16,185,129,.08);}
+  .tarefa-body{flex:1;}
+  .tarefa-titulo{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;}
+  .tarefa-desc{font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.6;}
+  .tarefa-footer{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .urgencia-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;}
+  .urgencia-badge.urgente{background:rgba(232,57,90,.1);color:var(--urgent);border:1px solid rgba(232,57,90,.25);}
+  .urgencia-badge.breve{background:rgba(245,158,11,.1);color:#d97706;border:1px solid rgba(245,158,11,.25);}
+  .urgencia-badge.dias{background:rgba(59,130,246,.1);color:#1d4ed8;border:1px solid rgba(59,130,246,.25);}
+  .urgencia-badge.ok{background:rgba(16,185,129,.08);color:#059669;border:1px solid rgba(16,185,129,.2);}
+  .tarefa-data{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+  .tarefa-actions{display:flex;gap:6px;margin-left:auto;}
+  .alerta-dias{display:flex;align-items:center;gap:8px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:7px 12px;font-size:11px;color:#1d4ed8;font-weight:600;margin-bottom:6px;}
+  .alerta-breve{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.3);color:#92400e;}
+
+  /* UPLOAD (aba anexos) */
+  .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:36px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:20px;background:var(--bg2);}
+  .upload-area:hover,.upload-area.drag{border-color:var(--accent);background:rgba(79,110,247,.04);}
+  .upload-icon{font-size:36px;margin-bottom:10px;}
+  .upload-text{font-size:14px;color:var(--text2);font-weight:500;}
+  .upload-sub{font-size:12px;color:var(--text3);margin-top:4px;}
+  .upload-input{display:none;}
+  .anexo-list{display:flex;flex-direction:column;gap:8px;}
+  .anexo-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:13px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);}
+  .anexo-icon{font-size:24px;width:36px;text-align:center;}
+  .anexo-info{flex:1;}
+  .anexo-nome{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
+  .anexo-meta{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+  .anexo-actions{display:flex;gap:6px;}
+
+  /* DASHBOARD */
+  .dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+  .dash-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
+  .dash-card-val{font-size:32px;font-weight:700;color:var(--accent);font-family:'JetBrains Mono',monospace;}
+  .dash-card-label{font-size:11px;color:var(--text2);margin-top:4px;font-weight:500;}
+  .dash-tarefas{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
+  .dash-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;}
+  .dash-tarefa-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px;}
+  .dash-tarefa-row:last-child{border-bottom:none;}
+  .dash-materia-pill{font-size:10px;background:rgba(79,110,247,.08);color:var(--accent);padding:2px 8px;border-radius:10px;font-family:'JetBrains Mono',monospace;white-space:nowrap;font-weight:600;}
+
+  .empty{text-align:center;padding:52px 20px;color:var(--text3);}
+  .empty-icon{font-size:44px;margin-bottom:12px;}
+  .empty-text{font-size:14px;font-weight:500;}
+
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:13px 18px;font-size:13px;font-weight:500;color:var(--text);box-shadow:var(--shadow2);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;max-width:300px;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.success{border-color:var(--success);background:#f0fdf4;}
+  .toast.error{border-color:var(--danger);background:#fff1f2;}
+
+  .mob-toggle{display:none;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px;}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(26,31,54,.4);z-index:99;}
+
+  @media(max-width:768px){
+    .mob-toggle{display:block;}
+    .sidebar{position:fixed;left:-248px;top:60px;height:calc(100vh - 60px);z-index:100;transition:left .25s;}
+    .sidebar.open{left:0;}
+    .overlay.show{display:block;}
+    .main{padding:16px;}
+    .dash-grid{grid-template-columns:repeat(2,1fr);}
+    .form-row{flex-direction:column;}
+    .tabs{overflow-x:auto;}
+    .tab{white-space:nowrap;}
+    .header-sync{display:none;}
+    .login-card{margin:16px;padding:32px 24px;}
+    .anotacoes-grid{grid-template-columns:1fr;}
+    .modal{max-height:100vh;border-radius:0;}
+  }
+
+  /* MODAL VISUALIZAR NOTA */
+  #modal-ver-nota{z-index:600;}
+  #modal-ver-nota .modal{max-width:960px;max-height:95vh;}
+  .nota-ver-titulo{font-size:22px;font-weight:700;color:var(--text);margin-bottom:16px;line-height:1.3;}
+  .nota-ver-conteudo{font-size:14px;line-height:1.9;color:var(--text);word-break:break-word;}
+  .nota-ver-conteudo img{max-width:100%;border-radius:10px;margin:8px 0;display:block;}
+  .nota-ver-conteudo b,.nota-ver-conteudo strong{font-weight:700;}
+  .nota-ver-conteudo i,.nota-ver-conteudo em{font-style:italic;}
+  .nota-ver-conteudo u{text-decoration:underline;}
+  .nota-ver-conteudo ul{padding-left:22px;margin:6px 0;}
+  .nota-ver-conteudo ol{padding-left:22px;margin:6px 0;}
+  .nota-ver-conteudo li{margin:4px 0;}
+  .nota-ver-conteudo p{margin:6px 0;}
+  .nota-ver-conteudo table{border-collapse:collapse;width:100%;margin:10px 0;}
+  .nota-ver-conteudo td,.nota-ver-conteudo th{border:1px solid var(--border);padding:8px 14px;text-align:left;}
+  .nota-ver-conteudo th{background:var(--bg3);font-weight:700;}
+  .nota-ver-conteudo hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
+
+  .section-hidden{display:none;}
+  @keyframes fadeOut{0%{opacity:1;max-height:200px}100%{opacity:0;max-height:0;margin:0;padding:0;border:none;}}
+  .tarefa-saindo{animation:fadeOut .4s ease forwards;overflow:hidden;pointer-events:none;}
+  ::-webkit-scrollbar{width:5px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Psico<span>App</span></div>
+    <div class="login-sub">Acesso restrito — informe sua senha</div>
+    <div class="login-error" id="login-error">Senha incorreta. Tente novamente.</div>
+    <div class="login-group">
+      <label class="login-label">Senha</label>
+      <div class="login-input-wrap">
+        <input class="login-input" type="password" id="login-senha" placeholder="••••••••••••" autocomplete="current-password">
+        <button class="login-eye" id="login-eye" tabindex="-1">👁️</button>
+      </div>
+      <div class="caps-warn" id="caps-warn">⚠️ Caps Lock está LIGADO</div>
+    </div>
+    <button class="login-btn" id="login-btn">Entrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="toast" id="toast"></div>
+  <div class="overlay" id="overlay"></div>
+
+  <!-- MODAL DASHBOARD -->
+  <div class="modal-overlay" id="modal-dash">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-dash-title">—</span>
+        <button class="modal-close" id="modal-dash-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="dash-modal-list" id="modal-dash-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL VISUALIZAR NOTA -->
+  <div class="modal-overlay" id="modal-ver-nota">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="ver-nota-titulo-header"></span>
+        <button class="modal-close" id="modal-ver-close">✕</button>
+      </div>
+      <div class="modal-body" style="gap:16px;">
+        <div class="nota-ver-titulo" id="ver-nota-titulo"></div>
+        <div class="nota-ver-conteudo" id="ver-nota-conteudo"></div>
+        <div id="ver-nota-anexos" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        <div style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;" id="ver-nota-meta"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="ver-nota-copiar">📋 Copiar texto</button>
+        <button class="btn primary" id="ver-nota-editar">✏️ Editar</button>
+        <button class="modal-close btn" id="modal-ver-close2">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITOR DE NOTA -->
+  <div class="modal-overlay" id="modal-nota">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-nota-title">Nova anotação</span>
+        <button class="modal-close" id="modal-nota-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <label class="form-label">Título</label>
+          <input class="form-input" id="nota-titulo-input" placeholder="Título da anotação…">
+        </div>
+        <div>
+          <label class="form-label">Conteúdo</label>
+          <div class="editor-toolbar">
+            <button class="editor-btn" data-cmd="bold" title="Negrito"><b>B</b></button>
+            <button class="editor-btn" data-cmd="italic" title="Itálico"><i>I</i></button>
+            <button class="editor-btn" data-cmd="underline" title="Sublinhado"><u>U</u></button>
+            <div class="editor-sep"></div>
+            <button class="editor-btn" data-cmd="insertUnorderedList" title="Lista">• Lista</button>
+            <button class="editor-btn" data-cmd="insertOrderedList" title="Numerada">1. Lista</button>
+            <div class="editor-sep"></div>
+            <button class="editor-btn" id="btn-insert-img" title="Inserir imagem">🖼️ Imagem</button>
+            <input type="file" id="insert-img-input" accept="image/*" style="display:none">
+            <label id="btn-camera" class="editor-btn" title="Tirar foto" style="cursor:pointer;display:none">📷 Câmera<input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none"></label>
+            <div class="editor-sep"></div>
+            <button class="editor-btn" data-cmd="removeFormat" title="Limpar formatação">✕ Fmt</button>
+          </div>
+          <div class="editor-area" id="nota-editor" contenteditable="true" data-placeholder="Digite ou cole suas anotações aqui… (Ctrl+V para colar imagens)"></div>
+        </div>
+        <div>
+          <label class="form-label">Anexos da nota</label>
+          <label class="upload-btn-label">
+            📎 Anexar arquivo
+            <input type="file" id="nota-anexo-input" multiple style="display:none">
+          </label>
+          <div class="editor-anexos" id="nota-anexos-preview" style="margin-top:8px;min-height:0;border:none;background:transparent;padding:0;gap:6px;display:flex;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="modal-nota-cancel">Cancelar</button>
+        <button class="btn primary" id="modal-nota-save">💾 Salvar anotação</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="banner" id="banner">
+    <div class="banner-title">🔔 Atenção — tarefas próximas do prazo<button class="banner-close" id="bannerClose">✕</button></div>
+    <div class="banner-items" id="bannerItems"></div>
+  </div>
+
+  <div class="header">
+    <button class="mob-toggle" id="mobToggle">☰</button>
+    <div class="header-logo">Psico<span>App</span></div>
+    <div class="header-actions">
+      <button id="btnExportar" class="btn" style="font-size:11px;padding:5px 12px;">⬇️ Backup</button>
+      <label class="btn" style="font-size:11px;padding:5px 12px;cursor:pointer;">⬆️ Restaurar<input type="file" id="importFile" accept=".json" style="display:none"></label>
+      <div class="header-sync">
+        <div class="sync-dot" id="syncDot"></div>
+        <span id="syncLabel">conectando…</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-section">Visão Geral</div>
+      <button class="nav-item active" data-section="dashboard">📊 Dashboard</button>
+      <div class="sidebar-section">Matérias</div>
+      <button class="nav-item" data-section="AVP_IV"><span class="nav-code">AVP IV</span> Aval. Psicológica IV<span class="badge" id="badge-AVP_IV" style="display:none"></span></button>
+      <button class="nav-item" data-section="ECSB_IV"><span class="nav-code">ECSB IV</span> Estágio Básico IV<span class="badge" id="badge-ECSB_IV" style="display:none"></span></button>
+      <button class="nav-item" data-section="NPSI"><span class="nav-code">NPSI</span> Neuropsicologia<span class="badge" id="badge-NPSI" style="display:none"></span></button>
+      <button class="nav-item" data-section="ORP_II"><span class="nav-code">ORP II</span> Orientação Prof. II<span class="badge" id="badge-ORP_II" style="display:none"></span></button>
+      <button class="nav-item" data-section="PSIAP_II"><span class="nav-code">PSIAP II</span> Aprendizagem II<span class="badge" id="badge-PSIAP_II" style="display:none"></span></button>
+      <button class="nav-item" data-section="PSC_I"><span class="nav-code">PSC I</span> Social e Comunit. I<span class="badge" id="badge-PSC_I" style="display:none"></span></button>
+      <button class="nav-item" data-section="PSPA_II"><span class="nav-code">PSPA II</span> Psicopatologia II<span class="badge" id="badge-PSPA_II" style="display:none"></span></button>
+      <button class="nav-item" data-section="EAPP"><span class="nav-code">EAPP</span> Ética e Atuação<span class="badge" id="badge-EAPP" style="display:none"></span></button>
+      <div style="flex:1"></div>
+      <div style="padding:0 8px 8px;">
+        <button class="nav-lock" id="btnBloquear">🔒 Bloquear app</button>
+      </div>
+    </div>
+
+    <div class="main" id="main">
+      <div id="section-dashboard">
+        <div class="materia-header"><div class="materia-title">📊 Dashboard</div></div>
+        <div class="dash-grid" id="dashStats"></div>
+        <div class="dash-tarefas">
+          <div class="dash-title">⚠️ Próximas tarefas</div>
+          <div id="dashProximas"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getStorage, ref as sref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+const SENHA = '182427@Pedro';
+const firebaseConfig = {
+  apiKey:"AIzaSyBpGYtjhQYM-yvQZ7-0qq-48Olp6ICtpDc",
+  authDomain:"lembrete-f9484.firebaseapp.com",
+  databaseURL:"https://lembrete-f9484-default-rtdb.firebaseio.com",
+  projectId:"lembrete-f9484",
+  storageBucket:"lembrete-f9484.firebasestorage.app",
+  messagingSenderId:"256819423168",
+  appId:"1:256819423168:web:4028f4c40f83544bd78a25"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+const storage = getStorage(fbApp);
+
+const MATERIAS = [
+  {id:'AVP_IV',  code:'AVP IV',   nome:'Avaliação Psicológica IV'},
+  {id:'ECSB_IV', code:'ECSB IV',  nome:'Estágio Curricular Supervisionado Nível Básico IV'},
+  {id:'NPSI',    code:'NPSI',     nome:'Neuropsicologia'},
+  {id:'ORP_II',  code:'ORP II',   nome:'Orientação Profissional II'},
+  {id:'PSIAP_II',code:'PSIAP II', nome:'Psicologia da Aprendizagem II'},
+  {id:'PSC_I',   code:'PSC I',    nome:'Psicologia Social e Comunitária I'},
+  {id:'PSPA_II', code:'PSPA II',  nome:'Psicopatologia II'},
+  {id:'EAPP',    code:'EAPP',     nome:'Ética e Atuação Profissional em Psicologia'},
+];
+
+let allData = {};
+
+// ---- LOGIN ----
+const loginScreen = document.getElementById('login-screen');
+const appDiv = document.getElementById('app');
+const loginSenha = document.getElementById('login-senha');
+const loginError = document.getElementById('login-error');
+const capsWarn = document.getElementById('caps-warn');
+
+function mostrarApp(){ loginScreen.classList.add('hidden'); appDiv.classList.add('show'); sessionStorage.setItem('psico_auth','1'); }
+function bloquear(){ loginScreen.classList.remove('hidden'); appDiv.classList.remove('show'); sessionStorage.removeItem('psico_auth'); loginSenha.value=''; loginError.classList.remove('show'); setTimeout(()=>loginSenha.focus(),100); }
+function tentarLogin(){
+  if(loginSenha.value===SENHA){ loginError.classList.remove('show'); mostrarApp(); }
+  else{ loginError.classList.add('show'); loginSenha.value=''; loginSenha.classList.add('login-shake'); setTimeout(()=>loginSenha.classList.remove('login-shake'),400); loginSenha.focus(); }
+}
+loginSenha.addEventListener('keyup', e=>{ const c=e.getModifierState&&e.getModifierState('CapsLock'); capsWarn.classList.toggle('show',c); });
+loginSenha.addEventListener('keydown', e=>{ const c=e.getModifierState&&e.getModifierState('CapsLock'); capsWarn.classList.toggle('show',c); if(e.key==='Enter') tentarLogin(); });
+document.getElementById('login-eye').addEventListener('click',()=>{ const p=loginSenha.type==='password'; loginSenha.type=p?'text':'password'; document.getElementById('login-eye').textContent=p?'🙈':'👁️'; });
+document.getElementById('login-btn').addEventListener('click', tentarLogin);
+document.getElementById('btnBloquear').addEventListener('click', bloquear);
+if(sessionStorage.getItem('psico_auth')==='1') mostrarApp();
+else setTimeout(()=>loginSenha.focus(),200);
+
+// ---- UTILS ----
+function setSyncStatus(s){ const dot=document.getElementById('syncDot'),lbl=document.getElementById('syncLabel'); dot.className='sync-dot'+(s==='ok'?'':' '+s); lbl.textContent=s==='ok'?'conectado':s==='syncing'?'salvando…':'offline'; }
+function toast(msg,type=''){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(type?' '+type:''); setTimeout(()=>{ t.className='toast'; },3000); }
+function fmtData(s){ if(!s) return ''; return new Date(s).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function calcUrgencia(s){ if(!s) return null; const d=(new Date(s)-new Date())/86400000; if(d<0) return{label:'Vencida',cls:'urgente'}; if(d<=2) return{label:'Urgente',cls:'urgente',diasNum:Math.ceil(d)}; if(d<=7) return{label:'Esta semana',cls:'breve',diasNum:Math.ceil(d)}; if(d<=14) return{label:`${Math.ceil(d)} dias`,cls:'dias',diasNum:Math.ceil(d)}; return{label:'No prazo',cls:'ok'}; }
+function fileIcon(n){ const e=(n.split('.').pop()||'').toLowerCase(); if(e==='pdf') return'📄'; if(['jpg','jpeg','png','gif','webp'].includes(e)) return'🖼️'; if(['doc','docx'].includes(e)) return'📝'; if(['xls','xlsx'].includes(e)) return'📊'; if(['zip','rar'].includes(e)) return'🗜️'; return'📎'; }
+function fmtBytes(b){ if(!b) return''; if(b<1024) return b+' B'; if(b<1048576) return(b/1024).toFixed(1)+' KB'; return(b/1048576).toFixed(1)+' MB'; }
+
+// ---- MODAL NOTA ----
+let modalMid = null;
+let modalEditId = null;
+let notaAnexosPendentes = []; // [{nome, file, url(se já salvo)}]
+
+const modalNota = document.getElementById('modal-nota');
+const notaTituloInput = document.getElementById('nota-titulo-input');
+const notaEditor = document.getElementById('nota-editor');
+const notaAnexosPreview = document.getElementById('nota-anexos-preview');
+
+function abrirModalNota(mid, editId=null, dadosEdit=null){
+  modalMid = mid;
+  modalEditId = editId;
+  notaAnexosPendentes = [];
+  notaTituloInput.value = dadosEdit?.titulo || '';
+  notaEditor.innerHTML = dadosEdit?.html || '';
+  renderNotaAnexosPreview(dadosEdit?.anexos || []);
+  document.getElementById('modal-nota-title').textContent = editId ? 'Editar anotação' : 'Nova anotação';
+  modalNota.classList.add('show');
+  setTimeout(()=>notaTituloInput.focus(),100);
+}
+
+function fecharModalNota(){
+  modalNota.classList.remove('show');
+  modalMid = null; modalEditId = null; notaAnexosPendentes = [];
+  notaTituloInput.value=''; notaEditor.innerHTML=''; notaAnexosPreview.innerHTML='';
+}
+
+// ---- MODAL VER NOTA ----
+let verNotaMid = null, verNotaId = null, verNotaDados = null;
+
+function abrirVerNota(mid, id, n){
+  verNotaMid = mid; verNotaId = id; verNotaDados = n;
+  document.getElementById('ver-nota-titulo-header').textContent = n.titulo||'Anotação';
+  document.getElementById('ver-nota-titulo').textContent = n.titulo||'';
+  document.getElementById('ver-nota-conteudo').innerHTML = n.html||'';
+  document.getElementById('ver-nota-meta').textContent = 'Atualizado em ' + fmtData(n.atualizado);
+  const anexosEl = document.getElementById('ver-nota-anexos');
+  anexosEl.innerHTML = (n.anexos||[]).map(a=>`<a class="nota-anexo-chip" href="${a.url}" target="_blank">${fileIcon(a.nome)} ${a.nome}</a>`).join('');
+  document.getElementById('modal-ver-nota').classList.add('show');
+}
+
+document.getElementById('modal-ver-close').addEventListener('click', ()=>document.getElementById('modal-ver-nota').classList.remove('show'));
+document.getElementById('modal-ver-close2').addEventListener('click', ()=>document.getElementById('modal-ver-nota').classList.remove('show'));
+document.getElementById('ver-nota-copiar').addEventListener('click', ()=>{
+  const txt = new DOMParser().parseFromString(verNotaDados?.html||'','text/html').body.textContent||'';
+  navigator.clipboard.writeText(txt).then(()=>toast('📋 Copiado!','success'));
+});
+document.getElementById('ver-nota-editar').addEventListener('click', ()=>{
+  document.getElementById('modal-ver-nota').classList.remove('show');
+  if(verNotaMid && verNotaId && verNotaDados){
+    notaAnexosPendentes=(verNotaDados.anexos||[]).map(a=>({nome:a.nome,url:a.url,path:a.path,tamanho:a.tamanho}));
+    abrirModalNota(verNotaMid, verNotaId, {titulo:verNotaDados.titulo, html:verNotaDados.html, anexos:notaAnexosPendentes});
+  }
+});
+
+document.getElementById('modal-nota-close').addEventListener('click', fecharModalNota);
+document.getElementById('modal-nota-cancel').addEventListener('click', fecharModalNota);
+
+// Toolbar editor
+document.querySelectorAll('.editor-btn[data-cmd]').forEach(btn=>{
+  btn.addEventListener('click',()=>{ document.execCommand(btn.dataset.cmd,false,null); notaEditor.focus(); });
+});
+
+// Mostrar botão câmera só em dispositivos móveis
+if(/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)){
+  document.getElementById('btn-camera').style.display='';
+}
+
+// Foto pela câmera — insere no editor como imagem base64
+document.getElementById('camera-input').addEventListener('change', e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{ notaEditor.focus(); document.execCommand('insertImage',false,ev.target.result); };
+  reader.readAsDataURL(file);
+  e.target.value='';
+});
+
+// Inserir imagem no editor
+document.getElementById('btn-insert-img').addEventListener('click',()=>document.getElementById('insert-img-input').click());
+document.getElementById('insert-img-input').addEventListener('change', async e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{ document.execCommand('insertImage',false,ev.target.result); };
+  reader.readAsDataURL(file);
+  e.target.value='';
+});
+
+// Colar imagem com Ctrl+V
+notaEditor.addEventListener('paste', e=>{
+  const items = e.clipboardData?.items;
+  if(!items) return;
+  for(const item of items){
+    if(item.type.startsWith('image/')){
+      e.preventDefault();
+      const file=item.getAsFile();
+      const reader=new FileReader();
+      reader.onload=ev=>{ document.execCommand('insertImage',false,ev.target.result); };
+      reader.readAsDataURL(file);
+    }
+  }
+});
+
+// Anexos da nota
+function renderNotaAnexosPreview(lista){
+  notaAnexosPreview.innerHTML='';
+  lista.forEach((a,i)=>{
+    const div=document.createElement('div');
+    div.className='editor-anexo-item';
+    div.innerHTML=`<span>${fileIcon(a.nome)} ${a.nome}</span><button class="editor-anexo-del" data-i="${i}">✕</button>`;
+    div.querySelector('.editor-anexo-del').addEventListener('click',()=>{
+      notaAnexosPendentes.splice(i,1);
+      renderNotaAnexosPreview(notaAnexosPendentes);
+    });
+    notaAnexosPreview.appendChild(div);
+  });
+}
+
+document.getElementById('nota-anexo-input').addEventListener('change', e=>{
+  for(const file of e.target.files){
+    notaAnexosPendentes.push({nome:file.name, file});
+  }
+  renderNotaAnexosPreview(notaAnexosPendentes);
+  e.target.value='';
+});
+
+// Salvar nota
+document.getElementById('modal-nota-save').addEventListener('click', async ()=>{
+  const titulo = notaTituloInput.value.trim();
+  if(!titulo){ toast('Informe um título','error'); return; }
+  const html = notaEditor.innerHTML.trim();
+  if(!html){ toast('Escreva algo na anotação','error'); return; }
+
+  setSyncStatus('syncing');
+  toast('Salvando…');
+
+  // Upload dos anexos pendentes que ainda são File
+  const anexosSalvos = [];
+  for(const a of notaAnexosPendentes){
+    if(a.file){
+      try{
+        const path=`psicoapp/${modalMid}/notas-anexos/${Date.now()}_${a.nome}`;
+        const storRef=sref(storage,path);
+        await uploadBytes(storRef,a.file);
+        const url=await getDownloadURL(storRef);
+        anexosSalvos.push({nome:a.nome,url,path,tamanho:a.file.size});
+      }catch(e){ console.error(e); }
+    } else if(a.url){
+      anexosSalvos.push({nome:a.nome,url:a.url,path:a.path,tamanho:a.tamanho||0});
+    }
+  }
+
+  const nota = { titulo, html, anexos:anexosSalvos, atualizado:new Date().toISOString() };
+  try{
+    if(modalEditId){
+      await set(ref(db,`psicoapp/${modalMid}/notas/${modalEditId}`), nota);
+    } else {
+      await push(ref(db,`psicoapp/${modalMid}/notas`), nota);
+    }
+    setSyncStatus('ok');
+    toast('✅ Anotação salva!','success');
+    fecharModalNota();
+  }catch(e){ console.error(e); setSyncStatus('offline'); toast('Erro ao salvar','error'); }
+});
+
+// ---- BUILD SECTIONS ----
+function buildMateriaSection(m){
+  const div=document.createElement('div');
+  div.id='section-'+m.id;
+  div.className='section-hidden';
+  div.innerHTML=`
+    <div class="materia-header">
+      <div class="materia-code">${m.code}</div>
+      <div class="materia-title">${m.nome}</div>
+    </div>
+    <div class="tabs" id="${m.id}-tabs">
+      <button class="tab active" data-mid="${m.id}" data-tab="anotacoes">✏️ Anotações</button>
+      <button class="tab" data-mid="${m.id}" data-tab="tarefas">✅ Tarefas</button>
+      <button class="tab" data-mid="${m.id}" data-tab="anexos">📎 Anexos</button>
+    </div>
+
+    <div id="${m.id}-tab-anotacoes">
+      <div class="anotacoes-toolbar">
+        <span style="font-size:13px;font-weight:600;color:var(--text2)" id="${m.id}-notas-count"></span>
+        <button class="btn primary" data-action="nova-nota" data-mid="${m.id}">+ Nova anotação</button>
+      </div>
+      <div class="anotacoes-grid" id="${m.id}-notas"></div>
+    </div>
+
+    <div id="${m.id}-tab-tarefas" class="section-hidden">
+      <div class="nova-tarefa-form">
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label class="form-label">Título da tarefa</label>
+            <input class="form-input" id="${m.id}-tf-titulo" placeholder="Ex: Trabalho sobre DSM-5…">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prazo</label>
+            <input class="form-input" type="datetime-local" id="${m.id}-tf-data">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Descrição (opcional)</label>
+            <textarea class="form-input" id="${m.id}-tf-desc" placeholder="Detalhes…" style="min-height:60px;resize:vertical;"></textarea>
+          </div>
+        </div>
+        <button class="btn primary" data-action="add-tarefa" data-mid="${m.id}">+ Adicionar tarefa</button>
+      </div>
+      <div class="tarefa-list" id="${m.id}-tarefas"></div>
+    </div>
+
+    <div id="${m.id}-tab-anexos" class="section-hidden">
+      <div class="upload-area" id="${m.id}-upload-area">
+        <div class="upload-icon">📁</div>
+        <div class="upload-text">Clique ou arraste arquivos aqui</div>
+        <div class="upload-sub">PDF, imagens, Word e qualquer outro tipo</div>
+      </div>
+      <input type="file" id="${m.id}-file-input" class="upload-input" multiple>
+      <div class="anexo-list" id="${m.id}-anexos"></div>
+    </div>`;
+
+  document.getElementById('main').appendChild(div);
+
+  div.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.mid,btn.dataset.tab,btn)));
+  div.querySelectorAll('[data-action="nova-nota"]').forEach(b=>b.addEventListener('click',()=>abrirModalNota(b.dataset.mid)));
+  div.querySelectorAll('[data-action="add-tarefa"]').forEach(b=>b.addEventListener('click',()=>addTarefa(b.dataset.mid)));
+
+  const uploadArea=div.querySelector(`#${m.id}-upload-area`);
+  const fileInput=div.querySelector(`#${m.id}-file-input`);
+  uploadArea.addEventListener('click',()=>fileInput.click());
+  uploadArea.addEventListener('dragover',e=>{e.preventDefault();uploadArea.classList.add('drag');});
+  uploadArea.addEventListener('dragleave',()=>uploadArea.classList.remove('drag'));
+  uploadArea.addEventListener('drop',e=>{e.preventDefault();uploadArea.classList.remove('drag');uploadFiles(m.id,e.dataTransfer.files);});
+  fileInput.addEventListener('change',()=>{uploadFiles(m.id,fileInput.files);fileInput.value='';});
+}
+MATERIAS.forEach(buildMateriaSection);
+
+// ---- NAV ----
+function navigate(section){ document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.section===section)); document.querySelectorAll('[id^="section-"]').forEach(s=>s.classList.add('section-hidden')); document.getElementById('section-'+section)?.classList.remove('section-hidden'); closeSidebar(); }
+document.querySelectorAll('.nav-item').forEach(btn=>btn.addEventListener('click',()=>navigate(btn.dataset.section)));
+function switchTab(mid,tab,btn){ ['anotacoes','tarefas','anexos'].forEach(t=>document.getElementById(`${mid}-tab-${t}`)?.classList.add('section-hidden')); document.getElementById(`${mid}-tab-${tab}`)?.classList.remove('section-hidden'); document.querySelectorAll(`#${mid}-tabs .tab`).forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+document.getElementById('mobToggle').addEventListener('click',()=>{ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); });
+document.getElementById('overlay').addEventListener('click',closeSidebar);
+document.getElementById('bannerClose').addEventListener('click',()=>document.getElementById('banner').classList.remove('show'));
+
+// ---- FIREBASE ----
+onValue(ref(db,'psicoapp'),snap=>{ allData=snap.val()||{}; renderAll(); setSyncStatus('ok'); },()=>setSyncStatus('offline'));
+
+function renderAll(){ MATERIAS.forEach(m=>{renderNotas(m.id);renderTarefas(m.id);renderAnexos(m.id);updateBadge(m.id);}); renderDashboard(); checkBanner(); }
+
+// ---- NOTAS ----
+function renderNotas(mid){
+  const notas=allData[mid]?.notas||{};
+  const container=document.getElementById(`${mid}-notas`);
+  const count=document.getElementById(`${mid}-notas-count`);
+  if(!container) return;
+  const lista=Object.entries(notas).sort((a,b)=>new Date(b[1].atualizado||0)-new Date(a[1].atualizado||0));
+  if(count) count.textContent=lista.length>0?`${lista.length} anotaç${lista.length===1?'ão':'ões'}`:'';
+  if(!lista.length){
+    container.innerHTML='<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">Nenhuma anotação ainda.<br>Clique em "Nova anotação" para começar.</div></div>';
+    return;
+  }
+  container.innerHTML='';
+  lista.forEach(([id,n])=>{
+    const card=document.createElement('div');
+    card.className='nota-card';
+    const temAnexos=n.anexos&&n.anexos.length>0;
+    const textContent=new DOMParser().parseFromString(n.html||'','text/html').body.textContent||'';
+    const longo=textContent.length>200||( n.html&&n.html.includes('<img'));
+    card.innerHTML=`
+      <div class="nota-card-actions-bar">
+        <button class="btn small primary" data-view-nota="${id}" style="background:rgba(79,110,247,.1);color:var(--accent);border-color:rgba(79,110,247,.2);">⛶ Abrir</button>
+        <button class="btn small" data-expand="${id}">${longo?'▼ Ver mais':''}  </button>
+        <button class="btn small" data-copy-nota="${id}">📋 Copiar</button>
+        <button class="btn small" data-edit-nota="${id}">✏️ Editar</button>
+        <button class="btn small danger" data-del-nota="${id}">🗑️</button>
+      </div>
+      <div class="nota-card-body">
+        <div class="nota-titulo">${n.titulo||'Sem título'}</div>
+        <div class="nota-conteudo" id="nc-${id}">${n.html||''}<div class="nota-fade" id="nf-${id}" style="${longo?'':'display:none'}"></div></div>
+        ${temAnexos?`<div class="nota-anexos">${n.anexos.map(a=>`<a class="nota-anexo-chip" href="${a.url}" target="_blank">${fileIcon(a.nome)} ${a.nome}</a>`).join('')}</div>`:''}
+        <div class="nota-meta">Atualizado em ${fmtData(n.atualizado)}</div>
+      </div>`;
+
+    // Ver mais/menos — botão na barra fixa
+    const expandBtn = card.querySelector(`[data-expand="${id}"]`);
+    if(expandBtn){
+      if(!longo){ expandBtn.style.display='none'; }
+      expandBtn.addEventListener('click',()=>{
+        const nc=document.getElementById(`nc-${id}`);
+        const nf=document.getElementById(`nf-${id}`);
+        const expandido=nc.classList.toggle('expandido');
+        if(nf) nf.style.display=expandido?'none':'';
+        expandBtn.textContent=expandido?'▲ Ver menos':'▼ Ver mais';
+      });
+    }
+
+    // Abrir maximizado
+    card.querySelector(`[data-view-nota="${id}"]`).addEventListener('click',()=>abrirVerNota(mid,id,n));
+
+    // Copiar
+    card.querySelector(`[data-copy-nota="${id}"]`).addEventListener('click',()=>{
+      const txt=new DOMParser().parseFromString(n.html||'','text/html').body.textContent||'';
+      navigator.clipboard.writeText(txt).then(()=>toast('📋 Copiado!','success'));
+    });
+
+    // Editar
+    card.querySelector(`[data-edit-nota="${id}"]`).addEventListener('click',()=>{
+      notaAnexosPendentes=(n.anexos||[]).map(a=>({nome:a.nome,url:a.url,path:a.path,tamanho:a.tamanho}));
+      abrirModalNota(mid,id,{titulo:n.titulo,html:n.html,anexos:notaAnexosPendentes});
+    });
+
+    // Excluir
+    card.querySelector(`[data-del-nota="${id}"]`).addEventListener('click',async()=>{
+      if(!confirm('Excluir esta anotação?')) return;
+      if(n.anexos) for(const a of n.anexos){ try{await deleteObject(sref(storage,a.path));}catch(e){} }
+      await remove(ref(db,`psicoapp/${mid}/notas/${id}`));
+      toast('Anotação excluída');
+    });
+
+    container.appendChild(card);
+  });
+}
+
+// ---- TAREFAS ----
+function renderTarefas(mid){
+  const tarefas=allData[mid]?.tarefas||{};
+  const container=document.getElementById(`${mid}-tarefas`);
+  if(!container) return;
+  const lista=Object.entries(tarefas).filter(([,t])=>!t.concluida).sort((a,b)=>{if(!a[1].data) return 1;if(!b[1].data) return -1;return new Date(a[1].data)-new Date(b[1].data);});
+  if(!lista.length){container.innerHTML='<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Nenhuma tarefa pendente</div></div>';return;}
+  container.innerHTML='';
+  lista.forEach(([id,t])=>{
+    const urg=calcUrgencia(t.data);
+    const card=document.createElement('div');
+    card.className='tarefa-card';
+    let alerta='';
+    if(urg?.cls==='dias') alerta=`<div class="alerta-dias">🗓️ Faltam ${urg.diasNum} dias para o prazo</div>`;
+    if(urg?.cls==='breve') alerta=`<div class="alerta-dias alerta-breve">⏰ Faltam ${urg.diasNum} dia${urg.diasNum!==1?'s':''} — esta semana!</div>`;
+    card.innerHTML=`
+      <div class="tarefa-check"></div>
+      <div class="tarefa-body">
+        ${alerta}
+        <div class="tarefa-titulo">${t.titulo||''}</div>
+        ${t.desc?`<div class="tarefa-desc">${t.desc}</div>`:''}
+        <div class="tarefa-footer">
+          ${urg?`<span class="urgencia-badge ${urg.cls}">${urg.label}</span>`:''}
+          ${t.data?`<span class="tarefa-data">📅 ${fmtData(t.data)}</span>`:''}
+          <div class="tarefa-actions"><button class="btn small danger" data-del="${id}">🗑️</button></div>
+        </div>
+      </div>`;
+    card.querySelector('.tarefa-check').addEventListener('click',()=>{ card.classList.add('tarefa-saindo'); setTimeout(()=>set(ref(db,`psicoapp/${mid}/tarefas/${id}/concluida`),true),400); });
+    card.querySelector(`[data-del="${id}"]`).addEventListener('click',()=>{ if(confirm('Excluir esta tarefa?')) remove(ref(db,`psicoapp/${mid}/tarefas/${id}`)); });
+    container.appendChild(card);
+  });
+}
+
+function addTarefa(mid){
+  const titulo=document.getElementById(`${mid}-tf-titulo`).value.trim();
+  if(!titulo){toast('Informe o título da tarefa','error');return;}
+  const data=document.getElementById(`${mid}-tf-data`).value||null;
+  const desc=document.getElementById(`${mid}-tf-desc`).value.trim();
+  setSyncStatus('syncing');
+  push(ref(db,`psicoapp/${mid}/tarefas`),{titulo,desc,data,concluida:false,criada:new Date().toISOString()})
+    .then(()=>{setSyncStatus('ok');toast('Tarefa adicionada!','success');document.getElementById(`${mid}-tf-titulo`).value='';document.getElementById(`${mid}-tf-data`).value='';document.getElementById(`${mid}-tf-desc`).value='';})
+    .catch(()=>setSyncStatus('offline'));
+}
+
+function updateBadge(mid){
+  const tarefas=allData[mid]?.tarefas||{};
+  const pend=Object.values(tarefas).filter(t=>{if(t.concluida) return false; const u=calcUrgencia(t.data); return u&&u.cls!=='ok';});
+  const badge=document.getElementById('badge-'+mid);
+  if(!badge) return;
+  if(pend.length>0){ badge.style.display='inline'; badge.textContent=pend.length; const hasU=pend.some(t=>calcUrgencia(t.data)?.cls==='urgente'),hasB=pend.some(t=>calcUrgencia(t.data)?.cls==='breve'); badge.className='badge'+(hasU?'':hasB?' soon':' dias'); }
+  else badge.style.display='none';
+}
+
+function checkBanner(){
+  const itens=[];
+  MATERIAS.forEach(m=>{ Object.values(allData[m.id]?.tarefas||{}).forEach(t=>{ if(t.concluida) return; const u=calcUrgencia(t.data); if(u&&u.cls!=='ok') itens.push({...t,materia:m.code,urg:u}); }); });
+  const banner=document.getElementById('banner');
+  if(!itens.length){banner.classList.remove('show');return;}
+  itens.sort((a,b)=>new Date(a.data)-new Date(b.data));
+  document.getElementById('bannerItems').innerHTML=itens.slice(0,6).map(i=>{const e=i.urg.cls==='urgente'?'🔴':i.urg.cls==='breve'?'🟡':'🔵';return`<div class="banner-item ${i.urg.cls}"><span>${e}</span><span><b>${i.materia}</b> — ${i.titulo}</span><span style="margin-left:auto;font-family:monospace;font-size:11px;opacity:.7">${fmtData(i.data)}</span></div>`;}).join('');
+  banner.classList.add('show');
+}
+
+function renderDashboard(){
+  let totalNotas=0,total=0,urgentes=0,concluidas=0,totalAnexos=0; const proximas=[];
+  MATERIAS.forEach(m=>{
+    totalNotas+=Object.keys(allData[m.id]?.notas||{}).length;
+    totalAnexos+=Object.keys(allData[m.id]?.anexos||{}).length;
+    Object.entries(allData[m.id]?.tarefas||{}).forEach(([,t])=>{ total++; if(t.concluida){concluidas++;return;} const u=calcUrgencia(t.data); if(u?.cls==='urgente') urgentes++; if(t.data) proximas.push({...t,materia:m.code,urg:u}); });
+  });
+  proximas.sort((a,b)=>new Date(a.data)-new Date(b.data));
+
+  const cards = [
+    {val:totalNotas, label:'Anotações salvas', hint:'Clique para ver todas', color:'var(--accent)', tipo:'notas'},
+    {val:total,      label:'Total de tarefas', hint:'Clique para ver todas', color:'var(--accent)', tipo:'tarefas-todas'},
+    {val:urgentes,   label:'Urgentes',         hint:'Clique para ver',       color:'var(--urgent)', tipo:'tarefas-urgentes'},
+    {val:concluidas, label:'Concluídas',        hint:'Clique para ver',       color:'var(--success)',tipo:'tarefas-concluidas'},
+    {val:totalAnexos,label:'Anexos',            hint:'Clique para ver todos', color:'var(--accent)', tipo:'anexos'},
+  ];
+
+  document.getElementById('dashStats').innerHTML = cards.map(c=>`
+    <div class="dash-card" data-tipo="${c.tipo}">
+      <div class="dash-card-val" style="color:${c.color}">${c.val}</div>
+      <div class="dash-card-label">${c.label}</div>
+      <div class="dash-card-hint">↗ ${c.hint}</div>
+    </div>`).join('');
+
+  document.querySelectorAll('.dash-card').forEach(card=>{
+    card.addEventListener('click',()=>abrirModalDash(card.dataset.tipo));
+  });
+
+  const proxEl=document.getElementById('dashProximas');
+  if(!proximas.length){proxEl.innerHTML='<div style="color:var(--text3);font-size:13px;padding:12px 0">Nenhuma tarefa pendente com prazo 🎉</div>';return;}
+  proxEl.innerHTML=proximas.slice(0,8).map(t=>`<div class="dash-tarefa-row">${t.urg?`<span class="urgencia-badge ${t.urg.cls}">${t.urg.label}</span>`:''}<span class="dash-materia-pill">${t.materia}</span><span style="flex:1;font-size:12px;color:var(--text);font-weight:500">${t.titulo}</span><span style="font-size:11px;color:var(--text3);font-family:monospace">${fmtData(t.data)}</span></div>`).join('');
+}
+
+// ---- MODAL DASHBOARD ----
+document.getElementById('modal-dash-close').addEventListener('click',()=>document.getElementById('modal-dash').classList.remove('show'));
+
+function abrirModalDash(tipo){
+  const modal = document.getElementById('modal-dash');
+  const list  = document.getElementById('modal-dash-list');
+  const title = document.getElementById('modal-dash-title');
+  let itens = [];
+
+  if(tipo==='notas'){
+    title.textContent='📝 Todas as anotações';
+    MATERIAS.forEach(m=>{
+      Object.entries(allData[m.id]?.notas||{}).forEach(([id,n])=>{
+        itens.push({tipo:'nota',mid:m.id,id,icon:'📝',titulo:n.titulo||'Sem título',meta:`${m.code} · ${fmtData(n.atualizado)}`,atualizado:n.atualizado,dados:n});
+      });
+    });
+    itens.sort((a,b)=>new Date(b.atualizado||0)-new Date(a.atualizado||0));
+    if(!itens.length){list.innerHTML='<div class="dash-modal-empty">Nenhuma anotação ainda</div>';modal.classList.add('show');return;}
+    list.innerHTML='';
+    itens.forEach(it=>{
+      const div=document.createElement('div'); div.className='dash-modal-item';
+      div.innerHTML=`<div class="dash-modal-item-icon">${it.icon}</div><div class="dash-modal-item-body"><div class="dash-modal-item-titulo">${it.titulo}</div><div class="dash-modal-item-meta">${it.meta}</div></div><span style="font-size:11px;color:var(--text3)">→ Abrir</span>`;
+      div.addEventListener('click',()=>{ modal.classList.remove('show'); abrirVerNota(it.mid,it.id,it.dados); });
+      list.appendChild(div);
+    });
+
+  } else if(tipo==='tarefas-todas'||tipo==='tarefas-urgentes'||tipo==='tarefas-concluidas'){
+    const filtros = {todas:(t)=>true, urgentes:(t)=>{ const u=calcUrgencia(t.data); return !t.concluida&&u&&u.cls!=='ok'; }, concluidas:(t)=>t.concluida};
+    const filtro  = tipo==='tarefas-todas'?filtros.todas:tipo==='tarefas-urgentes'?filtros.urgentes:filtros.concluidas;
+    title.textContent = tipo==='tarefas-todas'?'✅ Todas as tarefas':tipo==='tarefas-urgentes'?'🔴 Tarefas urgentes':'✅ Tarefas concluídas';
+    MATERIAS.forEach(m=>{
+      Object.entries(allData[m.id]?.tarefas||{}).forEach(([id,t])=>{
+        if(!filtro(t)) return;
+        const u=calcUrgencia(t.data);
+        itens.push({mid:m.id,id,titulo:t.titulo,meta:`${m.code}${t.data?' · '+fmtData(t.data):''}`,criada:t.criada,urg:u,concluida:t.concluida});
+      });
+    });
+    itens.sort((a,b)=>{ if(!a.criada) return 1; if(!b.criada) return -1; return new Date(b.criada)-new Date(a.criada); });
+    if(!itens.length){list.innerHTML='<div class="dash-modal-empty">Nenhum item encontrado</div>';modal.classList.add('show');return;}
+    list.innerHTML='';
+    itens.forEach(it=>{
+      const div=document.createElement('div'); div.className='dash-modal-item';
+      const badge = it.concluida ? '<span class="dash-modal-item-badge urgencia-badge ok">Concluída</span>' : it.urg ? `<span class="dash-modal-item-badge urgencia-badge ${it.urg.cls}">${it.urg.label}</span>` : '';
+      div.innerHTML=`<div class="dash-modal-item-icon">${it.concluida?'✅':'📋'}</div><div class="dash-modal-item-body"><div class="dash-modal-item-titulo">${it.titulo}</div><div class="dash-modal-item-meta">${it.meta}</div></div>${badge}`;
+      list.appendChild(div);
+    });
+
+  } else if(tipo==='anexos'){
+    title.textContent='📎 Todos os anexos';
+    MATERIAS.forEach(m=>{
+      Object.entries(allData[m.id]?.anexos||{}).forEach(([id,a])=>{
+        itens.push({icon:fileIcon(a.nome),titulo:a.nome,meta:`${m.code} · ${fmtBytes(a.tamanho)} · ${fmtData(a.enviado)}`,url:a.url,enviado:a.enviado});
+      });
+    });
+    itens.sort((a,b)=>new Date(b.enviado||0)-new Date(a.enviado||0));
+    if(!itens.length){list.innerHTML='<div class="dash-modal-empty">Nenhum anexo ainda</div>';modal.classList.add('show');return;}
+    list.innerHTML='';
+    itens.forEach(it=>{
+      const div=document.createElement('div'); div.className='dash-modal-item';
+      div.innerHTML=`<div class="dash-modal-item-icon">${it.icon}</div><div class="dash-modal-item-body"><div class="dash-modal-item-titulo">${it.titulo}</div><div class="dash-modal-item-meta">${it.meta}</div></div><a href="${it.url}" target="_blank" onclick="event.stopPropagation()"><button class="btn small">⬇️ Baixar</button></a>`;
+      list.appendChild(div);
+    });
+  }
+
+  modal.classList.add('show');
+}
+
+// ---- ANEXOS ABA ----
+function renderAnexos(mid){
+  const anexos=allData[mid]?.anexos||{};
+  const container=document.getElementById(`${mid}-anexos`);
+  if(!container) return;
+  const lista=Object.entries(anexos);
+  if(!lista.length){container.innerHTML='';return;}
+  container.innerHTML='';
+  lista.forEach(([id,a])=>{
+    const card=document.createElement('div'); card.className='anexo-card';
+    card.innerHTML=`<div class="anexo-icon">${fileIcon(a.nome)}</div><div class="anexo-info"><div class="anexo-nome">${a.nome}</div><div class="anexo-meta">${fmtBytes(a.tamanho)} · ${fmtData(a.enviado)}</div></div><div class="anexo-actions"><a href="${a.url}" target="_blank"><button class="btn small">⬇️ Baixar</button></a><button class="btn small danger" data-del="${id}">🗑️</button></div>`;
+    card.querySelector(`[data-del="${id}"]`).addEventListener('click',()=>deleteAnexo(mid,id,a.path));
+    container.appendChild(card);
+  });
+}
+
+async function uploadFiles(mid,files){
+  if(!files||!files.length) return;
+  for(const file of files){
+    toast(`Enviando ${file.name}…`); setSyncStatus('syncing');
+    try{ const path=`psicoapp/${mid}/${Date.now()}_${file.name}`; const storRef=sref(storage,path); await uploadBytes(storRef,file); const url=await getDownloadURL(storRef); await push(ref(db,`psicoapp/${mid}/anexos`),{nome:file.name,url,path,tamanho:file.size,enviado:new Date().toISOString()}); setSyncStatus('ok'); toast(`✅ ${file.name} enviado!`,'success'); }
+    catch(e){ console.error(e); toast('Erro ao enviar arquivo.','error'); setSyncStatus('offline'); }
+  }
+}
+
+async function deleteAnexo(mid,id,path){ if(!confirm('Excluir este anexo?')) return; try{await deleteObject(sref(storage,path));}catch(e){console.warn(e);} await remove(ref(db,`psicoapp/${mid}/anexos/${id}`)); toast('Anexo excluído'); }
+
+// ---- BACKUP ----
+document.getElementById('btnExportar').addEventListener('click',()=>{
+  const agora=new Date(); const exportData={exportado:agora.toISOString(),versao:'2.0',dados:{}};
+  MATERIAS.forEach(m=>{exportData.dados[m.id]={notas:allData[m.id]?.notas||{},tarefas:allData[m.id]?.tarefas||{}};});
+  const blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`psicoapp-backup-${agora.toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); toast('✅ Backup baixado!','success');
+});
+
+document.getElementById('importFile').addEventListener('change',async e=>{
+  const file=e.target.files[0]; if(!file) return;
+  try{
+    const dados=JSON.parse(await file.text()); if(!dados.dados){toast('Arquivo inválido','error');return;}
+    if(!confirm(`Restaurar backup de ${dados.exportado?new Date(dados.exportado).toLocaleString('pt-BR'):'data desconhecida'}?\n\nIsso vai sobrescrever suas anotações e tarefas atuais.`)) return;
+    setSyncStatus('syncing'); toast('Restaurando…');
+    for(const mid of Object.keys(dados.dados)){ const d=dados.dados[mid]; if(d.notas&&Object.keys(d.notas).length) await set(ref(db,`psicoapp/${mid}/notas`),d.notas); if(d.tarefas&&Object.keys(d.tarefas).length) await set(ref(db,`psicoapp/${mid}/tarefas`),d.tarefas); }
+    setSyncStatus('ok'); toast('✅ Backup restaurado!','success');
+  }catch(err){toast('Erro ao ler o arquivo de backup','error');}
+  e.target.value='';
+});
+</script>
+</body>
+</html>
